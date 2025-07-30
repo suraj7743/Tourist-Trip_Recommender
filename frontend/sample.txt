@@ -1,0 +1,157 @@
+  const mapToken =
+    "2a9629ecae044b269d9773f9fc476671_f883cae943c5464ff6e3e0e2f6c023a060315350df8ebe864a3bce1583d4eed2";
+  const tokenMap = "RjEzGaAwoNEsl49AwLQm";
+
+
+
+
+
+
+
+
+  import React, { useState, useRef, useEffect } from "react";
+import FilterForm from "./components/FilterForm";
+import MapView from "./components/MapView";
+import SidebarInfo from "./components/SidebarInfo";
+import type { FilterParams, Location, PlaceDetail } from "./types";
+import { fetchPlaces, fetchPlaceDetail } from "./api/places";
+
+const KATHMANDU_CENTER = { lat: 27.7172, lng: 85.324 };
+
+function App() {
+  const [places, setPlaces] = useState<Location[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceDetail | null>(null);
+  const [activePopupId, setActivePopupId] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FilterParams>({
+    category: "all",
+    rating: 0,
+    open_24_7: false,
+    limit: 10,
+  });
+
+  const mapRef = useRef<any>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await fetchPlaces(filters);
+      setPlaces(data);
+      setSelectedPlace(null); // show filter again
+      setActivePopupId(null); // remove popup
+    };
+    load();
+  }, [filters]);
+
+  const handleFilterSubmit = (newFilters: FilterParams) => {
+    setFilters(newFilters);
+  };
+
+  const handleMarkerClick = async (placeId: number) => {
+    const data = await fetchPlaceDetail(placeId);
+    setSelectedPlace(data);
+    setActivePopupId(placeId);
+  };
+
+  const handleMapClick = () => {
+    setSelectedPlace(null);
+    setActivePopupId(null);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedPlace(null);
+    setActivePopupId(null);
+  };
+
+  return (
+    //give raw css for this inline
+    <div
+      className=""
+      style={{
+        display: "flex",
+        height: "100vh",
+        width: "100vw",
+      }}
+    >
+      {/* Left: list of locations */}
+
+      <MapView
+        center={KATHMANDU_CENTER}
+        locations={places}
+        mapRef={mapRef}
+        onMarkerClick={handleMarkerClick}
+        onMapClick={handleMapClick}
+        activePopupId={activePopupId}
+      />
+      <div
+        className=""
+        style={{
+          position: "fixed",
+          right: "50px",
+          top: "50px",
+          width: "320px",
+          height: "80%",
+          backgroundColor: "white",
+        }}
+      >
+        <div className="fixed left-20 top-30 w-[320px]  bg-white shadow-lg p-6 flex flex-col ">
+          {selectedPlace ? (
+            <SidebarInfo place={selectedPlace} onClose={handleCloseDetail} />
+          ) : (
+            <FilterForm
+              onSubmit={handleFilterSubmit}
+              initialFilters={filters}
+            />
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// <div className="relative h-screen w-screen flex bg-gray-100">
+//   {/* Map */}
+//   <div className="flex-1">
+//     <MapView
+//       center={KATHMANDU_CENTER}
+//       locations={places}
+//       mapRef={mapRef}
+//       onMarkerClick={handleMarkerClick}
+//       onMapClick={handleMapClick}
+//       activePopupId={activePopupId}
+//     />
+//   </div>
+
+//   {/* Right Panel - Adjusted Styling */}
+//   <div className="absolute left-20 top-30 w-[320px] h-full bg-white shadow-lg p-6 flex flex-col overflow-y-auto">
+//     {selectedPlace ? (
+//       <SidebarInfo place={selectedPlace} onClose={handleCloseDetail} />
+//     ) : (
+//       <FilterForm onSubmit={handleFilterSubmit} initialFilters={filters} />
+//     )}
+//   </div>
+// </div>
+
+export default App;
+
+//   <div className="h-screen w-screen flex bg-gray-100">
+//     {/* Map */}
+//     <div className="flex-1">
+//       <MapView
+//         center={KATHMANDU_CENTER}
+//         locations={places}
+//         mapRef={mapRef}
+//         onMarkerClick={handleMarkerClick}
+//         onMapClick={handleMapClick}
+//         activePopupId={activePopupId}
+//       />
+//     </div>
+
+//     {/* Right Panel - Adjusted Styling */}
+//     <div className="fixed left-20 top-30 w-[320px] h-full bg-white shadow-lg p-6 flex flex-col overflow-y-auto">
+//       {selectedPlace ? (
+//         <SidebarInfo place={selectedPlace} onClose={handleCloseDetail} />
+//       ) : (
+//         <FilterForm onSubmit={handleFilterSubmit} initialFilters={filters} />
+//       )}
+//     </div>
+//   </div>
+// );

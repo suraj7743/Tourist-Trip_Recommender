@@ -1,0 +1,30 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgis/postgis:15-3.3
+    restart: always
+    environment:
+      POSTGRES_DB: osm_data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@db:5432/osm_data
+      - OVERPASS_URL=https://overpass-api.de/api/interpreter
+      - KATHMANDU_BBOX=[bbox:85.2314,27.5744,85.5364,27.8336]
+
+volumes:
+  pgdata:

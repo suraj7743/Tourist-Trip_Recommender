@@ -1,0 +1,85 @@
+import React, { useState, useRef, useEffect } from "react";
+import FilterForm from "./components/FilterForm";
+import MapView from "./components/MapView";
+import SidebarInfo from "./components/SidebarInfo";
+import type { FilterParams, Location, PlaceDetail } from "./types";
+import { fetchPlaces, fetchPlaceDetail } from "./api/places";
+
+const KATHMANDU_CENTER = { lat: 27.7172, lng: 85.324 };
+
+function App() {
+  const [places, setPlaces] = useState<Location[]>([]);
+  const [selectedPlace, setSelectedPlace] = useState<PlaceDetail | null>(null);
+  const [activePopupId, setActivePopupId] = useState<number | null>(null);
+  const [filters, setFilters] = useState<FilterParams>({
+    category: "all",
+    rating: 0,
+    open_24_7: false,
+    limit: 10,
+  });
+
+  const mapRef = useRef<any>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      const data = await fetchPlaces(filters);
+      setPlaces(data);
+      setSelectedPlace(null); // show filter again
+      setActivePopupId(null); // remove popup
+    };
+    load();
+  }, [filters]);
+
+  const handleFilterSubmit = (newFilters: FilterParams) => {
+    setFilters(newFilters);
+  };
+
+  const handleMarkerClick = async (placeId: number) => {
+    const data = await fetchPlaceDetail(placeId);
+    setSelectedPlace(data);
+    setActivePopupId(placeId);
+  };
+
+  const handleMapClick = () => {
+    setSelectedPlace(null);
+    setActivePopupId(null);
+  };
+
+  const handleCloseDetail = () => {
+    setSelectedPlace(null);
+    setActivePopupId(null);
+  };
+
+  return (
+    //give raw css for this inline
+    <div className="flex h-screen w-screen">
+      {/* MapView - full screen background */}
+      <MapView
+        center={KATHMANDU_CENTER}
+        locations={places}
+        mapRef={mapRef}
+        onMarkerClick={handleMarkerClick}
+        onMapClick={handleMapClick}
+        activePopupId={activePopupId}
+      />
+
+      <div
+        className="fixed top-[50px] right-[50px] w-[360px] h-[90%] rounded-[30px] shadow-xl overflow-hidden"
+        style={{
+          backgroundColor: "white",
+          borderRadius: "30px",
+          boxShadow:
+            "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)",
+        }}
+      >
+        {selectedPlace ? (
+          <SidebarInfo place={selectedPlace} onClose={handleCloseDetail} />
+        ) : (
+          <FilterForm onSubmit={handleFilterSubmit} initialFilters={filters} />
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default App;
