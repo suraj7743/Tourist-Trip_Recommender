@@ -92,7 +92,7 @@ This command:
 - All inside a single Docker network
 
 ```bash
-docker-compose up --build
+docker compose up --build
 ```
 
 ### 🌐 3. Access the App
