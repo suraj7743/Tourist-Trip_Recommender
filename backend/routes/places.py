@@ -14,7 +14,7 @@ async def list_places (
     category: Optional[str] = Query(None),
     min_rating: Optional[float] = Query(None, ge=0, le=5),
     open_24_7: Optional[bool] = Query(None),
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(100, ge=1),
     offset: int = Query(0, ge=0),
     db: AsyncSession = Depends(db_connection),
 ):

@@ -52,16 +52,41 @@ const MapView: React.FC<Props> = ({
     if (!activeLocation) return;
 
     const map = mapRef.current || internalMapRef.current?.getMap();
-    console.log("Map zoom current:", map);
     if (!map) return;
 
-    console.log("Executing flyTo");
+    const currentCenter = map.getCenter();
+    const currentZoom = map.getZoom();
+
+    const dx = currentCenter.lng - activeLocation.longitude;
+    const dy = currentCenter.lat - activeLocation.latitude;
+    const distance = Math.sqrt(dx * dx + dy * dy);
+
+    let targetZoom = Math.max(currentZoom, 15.5);
+    let speed = 0.6;
+    let curve = 1.8;
+
+    if (distance < 0.0005) {
+      // Marker is almost at center — zoom in more and go very slow
+      targetZoom = Math.min(currentZoom + 2.5, 18.5);
+      speed = 0.2;
+      curve = 3;
+    } else if (distance < 0.0015) {
+      // Close marker — smooth and zoomed
+      targetZoom = Math.min(currentZoom + 1.8, 17);
+      speed = 0.35;
+      curve = 2.0;
+    } else if (distance < 0.004) {
+      targetZoom = Math.max(currentZoom, 16);
+      speed = 0.5;
+      curve = 1.8;
+    }
+
     map.flyTo({
       center: [activeLocation.longitude, activeLocation.latitude],
-      zoom: Math.max(map.getZoom(), 14),
-      speed: 0.9,
-      curve: 1,
-      easing: (t: number) => t * (2 - t),
+      zoom: targetZoom,
+      speed,
+      curve,
+      easing: (t: number) => 1 - Math.pow(1 - t, 4), // buttery smooth
       essential: true,
     });
   }, [activePopupId, locations, mapRef, mapLoaded]);

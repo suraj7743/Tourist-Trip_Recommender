@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { FilterParams } from "../types";
 
 type Props = {
-  onSubmit: (filters: FilterParams) => void;
+  onSubmit: (filters: FilterParams) => Promise<void>; // ✅ parent must return a Promise
   initialFilters: FilterParams;
 };
 
@@ -11,15 +11,18 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
   const [rating, setRating] = useState(initialFilters.rating ?? 0);
   const [open247, setOpen247] = useState(initialFilters.open_24_7 ?? false);
   const [limit, setLimit] = useState(initialFilters.limit ?? 10);
+  const [submitting, setSubmitting] = useState(false); // ✅ local state to disable button
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
+    setSubmitting(true);
+    await onSubmit({
       category,
       rating,
       open_24_7: open247,
       limit,
     });
+    setSubmitting(false); // ✅ re-enable button after fetch
   };
 
   return (
@@ -71,12 +74,12 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
             <option value="museum">Museum</option>
           </select>
         </div>
+
         <hr
           className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"
-          style={{
-            backgroundColor: "lightgray",
-          }}
+          style={{ backgroundColor: "lightgray" }}
         />
+
         <div>
           <label
             className="block text-sm font-medium mb-1"
@@ -96,13 +99,12 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
             className="w-full"
           />
         </div>
+
         <hr
           className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"
-          style={{
-            backgroundColor: "lightgray",
-            marginTop: "20px",
-          }}
+          style={{ backgroundColor: "lightgray", marginTop: "20px" }}
         />
+
         <div
           className="flex items-center ps-3"
           style={{
@@ -115,7 +117,6 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
             type="checkbox"
             checked={open247}
             onChange={(e) => setOpen247(e.target.checked)}
-            className=""
             style={{
               marginRight: "20px",
               width: "20px",
@@ -126,19 +127,17 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
           <label
             className="w-full py-3 ms-2 text-sm font-medium text-gray-900 dark:text-gray-300"
             style={{
-              marginLeft: "5px", //any other styling,
+              marginLeft: "5px",
               paddingLeft: "5px",
             }}
           >
             Open 24_7
           </label>
         </div>
+
         <hr
           className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"
-          style={{
-            backgroundColor: "lightgray",
-            marginTop: "20px",
-          }}
+          style={{ backgroundColor: "lightgray", marginTop: "20px" }}
         />
 
         <div>
@@ -149,9 +148,15 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
             Limit
           </label>
           <input
-            type="number"
-            value={limit}
-            onChange={(e) => setLimit(Number(e.target.value))}
+            type="text"
+            inputMode="numeric"
+            value={limit === 0 ? "" : String(limit)}
+            onChange={(e) => {
+              const cleaned = e.target.value
+                .replace(/^0+(?=\d)/, "")
+                .replace(/\D/g, "");
+              setLimit(cleaned === "" ? 0 : Number(cleaned));
+            }}
             className=""
             style={{
               marginLeft: "10px",
@@ -163,15 +168,15 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
             min="1"
           />
         </div>
+
         <hr
           className="h-px my-8 bg-gray-200 border-0 dark:bg-gray-700"
-          style={{
-            backgroundColor: "lightgray",
-            marginTop: "20px",
-          }}
+          style={{ backgroundColor: "lightgray", marginTop: "20px" }}
         />
+
         <button
           type="submit"
+          disabled={submitting}
           className=""
           style={{
             backgroundColor: "lightblue",
@@ -180,15 +185,16 @@ const FilterForm: React.FC<Props> = ({ onSubmit, initialFilters }) => {
             borderRadius: "30px",
             marginLeft: "10px",
             width: "90%",
-            //remvove border
             border: "none",
             height: "40px",
             fontSize: "16px",
             fontWeight: "bold",
-            cursor: "pointer",
+            cursor: submitting ? "wait" : "pointer", // 👈 cursor shows loading
+            opacity: submitting ? 0.8 : 1, // 👈 slight dim effect
           }}
         >
-          Submit Filters
+          {submitting ? "Please wait..." : "Submit Filters"}{" "}
+          {/* 👈 label change */}
         </button>
       </form>
     </div>

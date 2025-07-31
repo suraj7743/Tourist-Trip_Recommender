@@ -31,7 +31,11 @@ function App() {
   }, [filters]);
 
   const handleFilterSubmit = (newFilters: FilterParams) => {
-    setFilters(newFilters);
+    return new Promise<void>((resolve) => {
+      setFilters(newFilters); // triggers useEffect for fetch
+      // Give React time to repaint before resolving
+      setTimeout(resolve, 300); // 👈 Just enough to show 'Please wait...'
+    });
   };
 
   const handleMarkerClick = async (placeId: number) => {

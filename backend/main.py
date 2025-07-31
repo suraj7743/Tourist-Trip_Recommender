@@ -25,6 +25,10 @@ app.add_middleware(
 def hello_api():
     return {"message":"Fast api home route"}
 
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}
+
 
 
 

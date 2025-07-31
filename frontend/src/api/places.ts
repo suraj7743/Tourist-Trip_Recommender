@@ -1,6 +1,6 @@
 import type { FilterParams, Location, PlaceDetail } from "../types";
 
-const BASE_URL = "http://172.19.0.3:8000/places";
+const BASE_URL = "http://localhost:8000/places";
 export async function fetchPlaces(filters: FilterParams): Promise<Location[]> {
   const params = new URLSearchParams();
   if (filters.category !== "all") params.append("category", filters.category);
